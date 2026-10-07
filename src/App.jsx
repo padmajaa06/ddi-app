@@ -2,47 +2,30 @@ import React, { useState } from 'react';
 import { 
   AlertTriangle, 
   CheckCircle2, 
-  HelpCircle, 
   Pill, 
-  ShieldAlert, 
   ArrowRightLeft, 
-  Sparkles, 
   RotateCcw,
-  Info,
-  Activity,
-  HeartPulse
+  Activity
 } from 'lucide-react';
 
-// Static Demo Data Definitions
-const DEMO_PAIRS = [
+// Static Data Definitions
+const INTERACTION_DATABASE = [
   {
     drugs: ['warfarin', 'aspirin'],
     type: 'harmful',
-    resultTitle: '⚠️ Potentially Harmful Interaction',
-    message: 'These medicines can increase the risk of bleeding when used together. This is a simplified educational example.',
-    severity: 'High',
-    severityColor: 'red'
+    title: '⚠️ Harmful Drug Interaction',
+    message: 'Potentially harmful interaction detected. These medicines can increase the risk of bleeding when used together.',
+    badge: 'Harmful Interaction',
+    badgeStyle: 'bg-red-100/80 text-red-800 border-red-300'
   },
   {
     drugs: ['amoxicillin', 'paracetamol'],
     type: 'no_major',
-    resultTitle: '✅ No major interaction detected in this demo',
-    message: 'This pair is included only as a simplified educational example and does not mean the combination is appropriate for every person.',
-    severity: 'Low',
-    severityColor: 'emerald'
+    title: '✅ No Major Interaction Detected',
+    message: 'No major interaction detected between these medicines.',
+    badge: 'No Major Interaction',
+    badgeStyle: 'bg-emerald-100/80 text-emerald-800 border-emerald-300'
   }
-];
-
-// Available suggested drug names for autocomplete / quick fill
-const KNOWN_DRUGS = [
-  'Warfarin',
-  'Aspirin',
-  'Amoxicillin',
-  'Paracetamol',
-  'Ibuprofen',
-  'Metformin',
-  'Lisinopril',
-  'Atorvastatin'
 ];
 
 export default function App() {
@@ -68,48 +51,26 @@ export default function App() {
     setHasChecked(true);
 
     // Normalize check (order-insensitive)
-    const match = DEMO_PAIRS.find(pair => {
+    const match = INTERACTION_DATABASE.find(pair => {
       const [itemA, itemB] = pair.drugs;
       return (d1 === itemA && d2 === itemB) || (d1 === itemB && d2 === itemA);
     });
 
     if (match) {
-      setActiveResult(match);
-    } else {
       setActiveResult({
-        type: 'unknown',
-        resultTitle: '⚠️ Interaction data not available in this demo.',
-        message: 'Do NOT assume that an unknown pair is safe.',
-        severity: 'Unknown',
-        severityColor: 'amber'
+        ...match,
+        evaluatedDrug1: drug1.trim(),
+        evaluatedDrug2: drug2.trim()
       });
-    }
-  };
-
-  const handlePresetSelect = (presetD1, presetD2) => {
-    setDrug1(presetD1);
-    setDrug2(presetD2);
-    setErrorMsg('');
-    
-    // Auto trigger check for convenient learning test
-    const d1 = presetD1.toLowerCase();
-    const d2 = presetD2.toLowerCase();
-    
-    setHasChecked(true);
-    const match = DEMO_PAIRS.find(pair => {
-      const [itemA, itemB] = pair.drugs;
-      return (d1 === itemA && d2 === itemB) || (d1 === itemB && d2 === itemA);
-    });
-
-    if (match) {
-      setActiveResult(match);
     } else {
       setActiveResult({
         type: 'unknown',
-        resultTitle: '⚠️ Interaction data not available in this demo.',
-        message: 'Do NOT assume that an unknown pair is safe.',
-        severity: 'Unknown',
-        severityColor: 'amber'
+        title: '⚠️ Interaction Data Unavailable',
+        message: 'Interaction data is not available for this pair. Do not assume that an unknown pair is safe.',
+        badge: 'Data Unavailable',
+        badgeStyle: 'bg-amber-100/80 text-amber-800 border-amber-300',
+        evaluatedDrug1: drug1.trim(),
+        evaluatedDrug2: drug2.trim()
       });
     }
   };
@@ -118,9 +79,6 @@ export default function App() {
     const temp = drug1;
     setDrug1(drug2);
     setDrug2(temp);
-    if (hasChecked) {
-      // Clear checked state or keep as is
-    }
   };
 
   const handleReset = () => {
@@ -134,21 +92,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col justify-between selection:bg-teal-100 selection:text-teal-900">
       
-      {/* Top Banner Notice */}
-      <header className="bg-gradient-to-r from-teal-700 via-teal-800 to-blue-900 text-white text-xs sm:text-sm py-2 px-4 shadow-sm">
-        <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 text-center sm:text-left">
-          <div className="flex items-center gap-2 mx-auto sm:mx-0">
-            <ShieldAlert className="w-4 h-4 text-amber-300 shrink-0 animate-pulse" />
-            <span>
-              <strong>Educational Prototype:</strong> For learning purposes only. Does not provide medical advice.
-            </span>
-          </div>
-          <span className="hidden md:inline-block text-teal-200 text-xs bg-teal-900/60 px-2.5 py-0.5 rounded-full border border-teal-600/40">
-            Frontend Demo (Static Data)
-          </span>
-        </div>
-      </header>
-
       {/* Main Content Area */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
         <div className="w-full max-w-xl mx-auto space-y-6">
@@ -172,7 +115,7 @@ export default function App() {
             {/* Input Form */}
             <form onSubmit={handleCheck} className="space-y-5">
               
-              {/* Field 1 */}
+              {/* Drug 1 */}
               <div className="space-y-1.5">
                 <label htmlFor="drug1" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Drug 1
@@ -186,7 +129,7 @@ export default function App() {
                       setDrug1(e.target.value);
                       if (errorMsg) setErrorMsg('');
                     }}
-                    placeholder="e.g. Warfarin, Amoxicillin"
+                    placeholder="Enter medicine name"
                     className="w-full px-4 py-3.5 pl-11 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all placeholder:text-slate-400 font-medium"
                   />
                   <Pill className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -217,7 +160,7 @@ export default function App() {
                 <div className="h-px bg-slate-100 flex-1"></div>
               </div>
 
-              {/* Field 2 */}
+              {/* Drug 2 */}
               <div className="space-y-1.5">
                 <label htmlFor="drug2" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Drug 2
@@ -231,7 +174,7 @@ export default function App() {
                       setDrug2(e.target.value);
                       if (errorMsg) setErrorMsg('');
                     }}
-                    placeholder="e.g. Aspirin, Paracetamol"
+                    placeholder="Enter medicine name"
                     className="w-full px-4 py-3.5 pl-11 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white focus:border-transparent transition-all placeholder:text-slate-400 font-medium"
                   />
                   <Pill className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -278,40 +221,6 @@ export default function App() {
               </div>
             </form>
 
-            {/* Quick Demo Preset Chips for Instant Testing */}
-            <div className="mt-6 pt-6 border-t border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-teal-500" />
-                Quick Test Demo Pairs:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => handlePresetSelect('Warfarin', 'Aspirin')}
-                  className="text-xs bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200/70 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1.5"
-                >
-                  <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                  Warfarin + Aspirin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePresetSelect('Amoxicillin', 'Paracetamol')}
-                  className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/70 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1.5"
-                >
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  Amoxicillin + Paracetamol
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePresetSelect('Ibuprofen', 'Metformin')}
-                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1.5"
-                >
-                  <span className="w-2 h-2 rounded-full bg-slate-400"></span>
-                  Unknown Pair (Custom)
-                </button>
-              </div>
-            </div>
-
           </div>
 
           {/* Result Card */}
@@ -350,49 +259,27 @@ export default function App() {
                 <div className="space-y-2 flex-1">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <h2 className="text-lg sm:text-xl font-bold tracking-tight">
-                      {activeResult.resultTitle}
+                      {activeResult.title}
                     </h2>
                     <span 
-                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-                        activeResult.type === 'harmful'
-                          ? 'bg-red-100/80 text-red-800 border-red-300'
-                          : activeResult.type === 'no_major'
-                          ? 'bg-emerald-100/80 text-emerald-800 border-emerald-300'
-                          : 'bg-amber-100/80 text-amber-800 border-amber-300'
-                      }`}
+                      className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${activeResult.badgeStyle}`}
                     >
-                      {activeResult.type === 'harmful'
-                        ? 'High Risk Warning'
-                        : activeResult.type === 'no_major'
-                        ? 'No Known Major Risk'
-                        : 'Educational Data Unavailable'}
+                      {activeResult.badge}
                     </span>
                   </div>
 
-                  <p className="text-sm sm:text-base leading-relaxed opacity-90 font-normal">
+                  <div className="text-xs font-semibold text-slate-600 tracking-wide uppercase">
+                    {activeResult.evaluatedDrug1} + {activeResult.evaluatedDrug2}
+                  </div>
+
+                  <p className="text-sm sm:text-base leading-relaxed opacity-90 font-normal pt-1">
                     {activeResult.message}
                   </p>
-
-                  <div className="pt-2 text-xs opacity-75 border-t border-current/10 flex items-center justify-between gap-2">
-                    <span>Evaluated pair: <strong>{drug1}</strong> + <strong>{drug2}</strong></span>
-                    <span>Demo Dataset v1.0</span>
-                  </div>
                 </div>
 
               </div>
             </div>
           )}
-
-          {/* Educational Disclaimer Card */}
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm text-xs text-slate-500 space-y-2">
-            <div className="flex items-center gap-2 text-slate-700 font-semibold">
-              <Info className="w-4 h-4 text-teal-600 shrink-0" />
-              <span>Educational & Learning Information</span>
-            </div>
-            <p className="leading-relaxed">
-              This application is designed exclusively for programming and interface learning purposes. It operates strictly on a local static dataset containing only two demonstration drug pairs. Always consult a certified doctor or pharmacist for clinical advice.
-            </p>
-          </div>
 
         </div>
       </main>
@@ -400,9 +287,9 @@ export default function App() {
       {/* Page Footer */}
       <footer className="py-4 px-6 text-center text-xs text-slate-400 border-t border-slate-200/60 bg-white">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Drug Interaction Checker &bull; Learning Prototype</span>
+          <span>Drug Interaction Checker</span>
           <span className="flex items-center gap-1">
-            Built with React & Vite
+            Healthcare Portal
           </span>
         </div>
       </footer>
